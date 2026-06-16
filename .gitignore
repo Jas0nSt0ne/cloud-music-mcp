@@ -9,9 +9,7 @@ venv/
 ENV/
 
 # Sensitive Data (Cookies & Sessions)
-src/storage/*.json
-src/storage/*.ncm
-src/storage/*.png
+src/cloud_music_mcp/storage/
 
 # Logs
 *.log

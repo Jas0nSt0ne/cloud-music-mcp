@@ -275,6 +275,29 @@ wheels = [
 ]
 
 [[package]]
+name = "cloud-music-mcp"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "mcp", extra = ["cli"] },
+    { name = "pillow" },
+    { name = "pyncm" },
+    { name = "qrcode" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=0.2.0" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.2.0" },
+    { name = "pillow", specifier = ">=10.0.0" },
+    { name = "pyncm", git = "https://github.com/Code-MonkeyZhang/pyncm.git?rev=26fda90ba874b652885458b89b92045ff88a8eef" },
+    { name = "qrcode", specifier = ">=7.4.0" },
+    { name = "requests", specifier = ">=2.31.0" },
+]
+
+[[package]]
 name = "cloudpickle"
 version = "3.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -795,29 +818,6 @@ wheels = [
 ]
 
 [[package]]
-name = "netease-mcp"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "fastmcp" },
-    { name = "mcp", extra = ["cli"] },
-    { name = "pillow" },
-    { name = "pyncm" },
-    { name = "qrcode" },
-    { name = "requests" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp", specifier = ">=0.2.0" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.2.0" },
-    { name = "pillow", specifier = ">=10.0.0" },
-    { name = "pyncm", specifier = ">=1.0.0" },
-    { name = "qrcode", specifier = ">=7.4.0" },
-    { name = "requests", specifier = ">=2.31.0" },
-]
-
-[[package]]
 name = "openapi-pydantic"
 version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1293,13 +1293,9 @@ crypto = [
 [[package]]
 name = "pyncm"
 version = "1.8.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/Code-MonkeyZhang/pyncm.git?rev=26fda90ba874b652885458b89b92045ff88a8eef#26fda90ba874b652885458b89b92045ff88a8eef" }
 dependencies = [
     { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/35/1a/30c0dad2969452e6b6d5b65f930d04d8247a3c506bad552ee9b7082336a4/pyncm-1.8.1.tar.gz", hash = "sha256:f967a598d148dbf69ff013f2e669e077764c34997c761a6a4b8f709d06494593", size = 65912, upload-time = "2025-10-18T08:47:50.41Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/f4/05d7a0116bd70dcef0f7214c0e9ee6a50a124525eaefc5c2bb0c5085f0b7/pyncm-1.8.1-py3-none-any.whl", hash = "sha256:839f9f0e534d4892b7b9ad0378f13c4595f900653e11f00d758f1aed957c4374", size = 74032, upload-time = "2025-10-18T08:47:48.618Z" },
 ]
 
 [[package]]
