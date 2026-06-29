@@ -24,7 +24,13 @@ from cloud_music_mcp.auth import check_login_status, login_via_qrcode
 from cloud_music_mcp.api import (
     get_daily_recommendations,
     get_user_playlists,
-    search_song,
+    search,
+    get_playlist_detail,
+    create_playlist,
+    add_to_playlist,
+    get_album_info,
+    get_artist_info,
+    get_my_subscriptions,
 )
 
 # 配置日志 (初始化)
@@ -106,18 +112,134 @@ def cloud_music_my_playlists():
 
 
 @mcp.tool()
-def cloud_music_search(keyword: str):
+def cloud_music_search(keyword: str, category: str = "song"):
     """
-    搜索歌曲
+    搜索歌曲、专辑、歌手或歌单
     args:
-        keyword: 歌名或歌手
+        keyword: 搜索关键词（歌名、歌手名、专辑名等）
+        category: 搜索类型，可选 'song'(歌曲)、'album'(专辑)、'artist'(歌手)、'playlist'(歌单)，默认为 'song'
     """
-    logger.info(f"Calling cloud_music_search with keyword: {keyword}")
-    result = search_song(keyword)
+    logger.info(f"Calling cloud_music_search with keyword: {keyword}, category: {category}")
+    result = search(keyword, category=category)
     if result["success"]:
-        return result["songs"]
+        return result["items"]
     else:
         return f"搜索失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_playlist_detail(playlist_id: int):
+    """
+    获取歌单详情，包括歌单内所有歌曲
+    args:
+        playlist_id: 歌单 ID
+    """
+    logger.info(f"Calling cloud_music_playlist_detail with playlist_id: {playlist_id}")
+    result = get_playlist_detail(playlist_id)
+    if result["success"]:
+        text = f"📋 歌单: {result['name']} ({result['count']}首)\n"
+        for i, song in enumerate(result["songs"], 1):
+            text += f"{i}. {song['name']} - {song['artist']} (ID: {song['id']})\n"
+        return text
+    else:
+        return f"获取失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_create_playlist(name: str, privacy: bool = False):
+    """
+    创建新歌单
+    args:
+        name: 歌单名称
+        privacy: 是否设为隐私歌单，默认为 False
+    """
+    logger.info(f"Calling cloud_music_create_playlist with name: {name}")
+    result = create_playlist(name, privacy)
+    if result["success"]:
+        return f"歌单创建成功: {result['name']} (ID: {result['playlist_id']})"
+    else:
+        return f"创建失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_add_to_playlist(playlist_id: int, track_ids: list[int]):
+    """
+    添加歌曲到指定歌单
+    args:
+        playlist_id: 目标歌单 ID
+        track_ids: 要添加的歌曲 ID 列表，例如 [123, 456]
+    """
+    logger.info(f"Calling cloud_music_add_to_playlist with playlist_id: {playlist_id}, track_ids: {track_ids}")
+    result = add_to_playlist(playlist_id, track_ids)
+    if result["success"]:
+        return f"成功添加 {result['added_count']} 首歌曲到歌单 {playlist_id}"
+    else:
+        return f"添加失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_album_info(album_id: int):
+    """
+    获取专辑详情，包括专辑信息和歌曲列表
+    args:
+        album_id: 专辑 ID
+    """
+    logger.info(f"Calling cloud_music_album_info with album_id: {album_id}")
+    result = get_album_info(album_id)
+    if result["success"]:
+        album = result["album"]
+        text = f"💿 专辑: {album['name']} - {album['artist']}\n"
+        text += f"📅 发行日期: {album['publish_date']} | 共 {album['size']} 首\n"
+        for i, song in enumerate(result["songs"], 1):
+            text += f"{i}. {song['name']} - {song['artist']} (ID: {song['id']})\n"
+        return text
+    else:
+        return f"获取失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_artist_info(artist_id: int):
+    """
+    获取歌手详情和热门歌曲 Top 10
+    args:
+        artist_id: 歌手 ID
+    """
+    logger.info(f"Calling cloud_music_artist_info with artist_id: {artist_id}")
+    result = get_artist_info(artist_id)
+    if result["success"]:
+        artist = result["artist"]
+        text = f"🎤 歌手: {artist['name']} (ID: {artist['id']})\n"
+        text += f"📊 专辑 {artist['album_count']} 张 | 歌曲 {artist['song_count']} 首\n"
+        if artist["description"]:
+            text += f"📝 {artist['description']}\n"
+        text += "\n🔥 热门歌曲:\n"
+        for i, song in enumerate(result["songs"], 1):
+            text += f"{i}. {song['name']} (ID: {song['id']})\n"
+        return text
+    else:
+        return f"获取失败: {result.get('error')}"
+
+
+@mcp.tool()
+def cloud_music_my_subscriptions(category: str = "artists"):
+    """
+    获取我收藏的歌手或专辑
+    args:
+        category: 类型，'artists'(歌手) 或 'albums'(专辑)，默认为 'artists'
+    """
+    logger.info(f"Calling cloud_music_my_subscriptions with category: {category}")
+    result = get_my_subscriptions(category)
+    if result["success"]:
+        type_name = "歌手" if category == "artists" else "专辑"
+        text = f"📌 收藏的{type_name} ({len(result['items'])}个):\n"
+        for i, item in enumerate(result["items"], 1):
+            if category == "albums":
+                text += f"{i}. {item['name']} - {item['artist']} (ID: {item['id']})\n"
+            else:
+                text += f"{i}. {item['name']} (ID: {item['id']})\n"
+        return text
+    else:
+        return f"获取失败: {result.get('error')}"
 
 
 @mcp.tool()
