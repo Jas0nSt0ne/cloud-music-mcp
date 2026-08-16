@@ -60,6 +60,8 @@ def check_login_status():
 def login_via_qrcode():
     """执行扫码登录流程"""
     try:
+        ensure_storage_dir()
+
         # 1. 获取 UUID (Unikey)
         result = apis.login.LoginQrcodeUnikey(1)
         if result['code'] != 200:
