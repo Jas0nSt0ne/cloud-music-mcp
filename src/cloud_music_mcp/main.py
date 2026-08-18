@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
 import os
-import sys
 import logging
-
-# 彻底静音：将 stderr 重定向到 devnull
-# 这样可以消除 FastMCP 的 Banner 以及所有第三方库的日志干扰
-sys.stderr = open(os.devnull, "w")
 
 # 在导入 FastMCP 之前设置环境变量以抑制日志和 Banner
 os.environ["LOGURU_LEVEL"] = "WARNING"
 os.environ["CI"] = "true"
 
 from fastmcp import FastMCP
-import subprocess
-import json
-import base64
-
-# 确保能导入同级模块
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from cloud_music_mcp.log import setup_logging
 from cloud_music_mcp.prompts import load_prompt
@@ -33,9 +22,16 @@ from cloud_music_mcp.api import (
     get_artist_info,
     get_my_subscriptions,
 )
+from cloud_music_mcp.client_control import get_client_status
+from cloud_music_mcp.services import (
+    play_daily_recommendation,
+    play_song_by_id,
+    search_and_play,
+)
 
 # 配置日志 (初始化)
-logger = setup_logging("main")
+setup_logging("cloud_music_mcp")
+logger = logging.getLogger(__name__)
 
 # 抑制 FastMCP 和相关库的日志
 logging.getLogger("fastmcp").setLevel(logging.WARNING)
@@ -55,11 +51,11 @@ mcp = FastMCP("Cloud-Music-MCP")
 @mcp.tool(description=load_prompt("cloud_music_status"))
 def cloud_music_status():
     logger.info("Calling cloud_music_status")
-    status = check_login_status()
-    if status["logged_in"]:
-        return f"已登录，当前用户: {status['nickname']}"
-    else:
-        return "未登录，请使用 cloud_music_login 进行扫码登录"
+    return {
+        "success": True,
+        "account": check_login_status(),
+        "client": get_client_status(),
+    }
 
 
 @mcp.tool(description=load_prompt("cloud_music_login"))
@@ -69,17 +65,17 @@ def cloud_music_login():
 
 
 @mcp.tool(description=load_prompt("cloud_music_get_daily_recommend"))
-def cloud_music_get_daily_recommend():
+def cloud_music_get_daily_recommend(limit: int = 50):
     logger.info("Calling cloud_music_get_daily_recommend")
     result = get_daily_recommendations()
-    if result["success"]:
-        # 格式化输出以便阅读
-        text = f"📅 今日推荐 ({len(result['songs'])}首):\n"
-        for i, song in enumerate(result["songs"][:10], 1):  # 只展示前10首
-            text += f"{i}. {song['name']} - {song['artist']} (ID: {song['id']})\n"
-        return text
-    else:
-        return f"获取失败: {result.get('error')}"
+    if not result["success"]:
+        return result
+    limit = max(1, min(int(limit), len(result["songs"])))
+    songs = [
+        {"position": position, **song}
+        for position, song in enumerate(result["songs"][:limit], 1)
+    ]
+    return {"success": True, "count": len(result["songs"]), "songs": songs}
 
 
 @mcp.tool(description=load_prompt("cloud_music_my_playlists"))
@@ -99,13 +95,9 @@ def cloud_music_my_playlists():
 
 
 @mcp.tool(description=load_prompt("cloud_music_search"))
-def cloud_music_search(keyword: str, category: str = "song"):
+def cloud_music_search(keyword: str, category: str = "song", limit: int = 10):
     logger.info(f"Calling cloud_music_search with keyword: {keyword}, category: {category}")
-    result = search(keyword, category=category)
-    if result["success"]:
-        return result["items"]
-    else:
-        return f"搜索失败: {result.get('error')}"
+    return search(keyword, category=category, limit=limit)
 
 
 @mcp.tool(description=load_prompt("cloud_music_playlist_detail"))
@@ -194,50 +186,26 @@ def cloud_music_my_subscriptions(category: str = "artists"):
 @mcp.tool(description=load_prompt("cloud_music_play"))
 def cloud_music_play(id: str, type: str = "song"):
     logger.info(f"Calling cloud_music_play with id: {id}, type: {type}")
-    try:
-        # 构造 JSON 指令
-        command = {"type": type, "id": str(id), "cmd": "play"}
+    return play_song_by_id(id, type)
 
-        # 序列化并 Base64 编码
-        json_str = json.dumps(command, separators=(",", ":"))
-        encoded = base64.b64encode(json_str.encode("utf-8")).decode("utf-8")
 
-        # 生成客户端 URL Scheme
-        app_url = f"orpheus://{encoded}"
-        logger.info(f"Generated App URL: {app_url}")
+@mcp.tool(description=load_prompt("cloud_music_play_daily"))
+def cloud_music_play_daily(position: int):
+    """Play one item from today's recommendations by one-based position."""
+    logger.info("Calling cloud_music_play_daily with position: %s", position)
+    return play_daily_recommendation(position)
 
-        # 尝试唤起客户端
-        try:
-            if sys.platform == "win32":
-                os.startfile(app_url)
-            else:
-                # macOS open 命令，检查返回码
-                ret = subprocess.run(["open", app_url], capture_output=True)
-                if ret.returncode != 0:
-                    raise FileNotFoundError("macOS open failed")
 
-            return f"已发送播放指令: {type} {id}"
-
-        except (OSError, FileNotFoundError, subprocess.CalledProcessError) as e:
-            logger.warning(f"无法唤起客户端: {e}，尝试使用网页版")
-
-            # 构造网页版 URL
-            # 单曲: https://music.163.com/#/song?id=123
-            # 歌单: https://music.163.com/#/playlist?id=123
-            web_type = "song" if type == "song" else "playlist"
-            web_url = f"https://music.163.com/#/{web_type}?id={id}"
-
-            if sys.platform == "win32":
-                os.startfile(web_url)
-            else:
-                subprocess.run(["open", web_url])
-
-            return f"⚠️ 未检测到客户端，已在浏览器中播放: {web_url}"
-
-    except Exception as e:
-        logger.error(f"播放失败: {e}")
-        return f"播放失败: {e}"
+@mcp.tool(description=load_prompt("cloud_music_search_and_play"))
+def cloud_music_search_and_play(keyword: str, position: int = 1):
+    """Search songs and play one result by one-based position."""
+    logger.info(
+        "Calling cloud_music_search_and_play with keyword: %s, position: %s",
+        keyword,
+        position,
+    )
+    return search_and_play(keyword, position)
 
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(show_banner=False)

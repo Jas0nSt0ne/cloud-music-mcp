@@ -14,6 +14,7 @@
 
 ## 📢 Update
 
+- **2026-08-18** 🖥️ v0.2.0 重构 Windows 播放控制 — 识别 Codex 隔离桌面，新增真实窗口与播放状态双重校验、每日推荐按位置直接播放、搜索并播放以及结构化错误码。已知限制：在 Codex 隔离环境中，客户端完全退出后的自动启动暂不可用。
 - **2026-06-29** 🎉 新增歌单管理 — AI 现在可以帮你创建歌单并批量添加歌曲，一句话完成「搜歌 → 建单 → 加歌」全流程。
 - **2026-06-29** 🔎 新增资料查询 — 支持查询歌单详情、专辑信息、歌手信息以及你的收藏列表。
 - **2026-06-16** 🔧 修复安装问题 — 替换已失效的 PyPI pyncm 为自维护 fork，补齐 build-system，并清除误提交的登录态等敏感文件。
@@ -25,7 +26,9 @@
 - **🧠 个性化推荐**：完美接入您的**每日推荐**和**歌单**。Agent 会根据您的听歌品味来播放音乐。
 - **🔍 搜歌功能**：支持按关键词搜索歌曲、歌手或专辑，并直接播放。
 - **📝 歌单管理**：不只是放歌，还能帮你创建歌单、批量加歌。说一句"建个某个主题的歌单"，AI 就会自动搜歌、建单、加歌一气呵成。
-- **🎛️ 桌面端联动**：通过 URL Scheme 唤起网易云音乐客户端播放，无缝衔接原生体验。
+- **🎛️ 官方客户端联动**：在 Windows 上控制网易云音乐官方客户端，并在成功前同时校验曲目、播放状态和真实输入桌面上的主窗口。MCP 不下载或解码音频。
+- **🧭 隔离桌面感知**：能区分 `CodexSandboxDesktop` 与 Windows `Default` 桌面，不再出现“能听见但看不见客户端”或假成功。
+- **⚡ 直接动作工具**：支持按位置播放每日推荐，以及搜索后直接播放指定结果，减少 Agent 多轮工具编排。
 
 ## 🛠️ 工具列表
 
@@ -34,28 +37,32 @@
 | 工具名称 (Tool Name)              | 参数 (Parameters)                                 | 功能描述 (Description)                     |
 | :-------------------------------- | :------------------------------------------------ | :----------------------------------------- |
 | `cloud_music_login`               | 无                                                | 启动扫码登录流程 (模拟官方 App)。          |
-| `cloud_music_status`              | 无                                                | 检查当前登录状态和用户信息。               |
-| `cloud_music_get_daily_recommend` | 无                                                | 获取今日推荐歌曲列表。                     |
+| `cloud_music_status`              | 无                                                | 检查账号、控制通道、输入桌面和主窗口。     |
+| `cloud_music_get_daily_recommend` | `limit`: 返回数量（默认 50）                      | 获取带位置编号的完整今日推荐列表。         |
 | `cloud_music_my_playlists`        | 无                                                | 获取用户的所有歌单（包括创建的和收藏的）。 |
 | `cloud_music_playlist_detail`     | `playlist_id`: 歌单 ID                            | 获取歌单详情及歌单内所有歌曲。             |
 | `cloud_music_create_playlist`     | `name`: 歌单名称 `<br>privacy`: 是否隐私(默认否)  | 创建新歌单。                               |
 | `cloud_music_add_to_playlist`     | `playlist_id`: 歌单 ID `<br>track_ids`: 歌曲 ID 列表 | 批量添加歌曲到指定歌单。                |
-| `cloud_music_search`              | `keyword`: 关键词 `<br>category`: 类型(默认'song') | 按关键词搜索歌曲、专辑、歌手或歌单。       |
+| `cloud_music_search`              | `keyword`: 关键词 `<br>category`: 类型 `<br>limit`: 数量 | 按关键词搜索歌曲、专辑、歌手或歌单。   |
 | `cloud_music_album_info`          | `album_id`: 专辑 ID                               | 获取专辑详情及歌曲列表。                   |
 | `cloud_music_artist_info`         | `artist_id`: 歌手 ID                              | 获取歌手详情和热门歌曲 Top 10。            |
 | `cloud_music_my_subscriptions`    | `category`: 'artists'/'albums'                    | 获取收藏的歌手或专辑列表。                 |
-| `cloud_music_play`                | `id`: 资源ID `<br>type`: 类型 ('song'/'playlist') | 播放指定的歌曲或歌单（自动唤起桌面应用）。 |
+| `cloud_music_play`                | `id`: 歌曲或歌单 ID `<br>type`: `'song'`/`'playlist'` | 控制网易云官方客户端播放单曲或歌单，并校验实际播放状态。 |
+| `cloud_music_play_daily`          | `position`: 从 1 开始的位置                       | 直接播放每日推荐第 N 首。                  |
+| `cloud_music_search_and_play`     | `keyword`: 关键词 `<br>position`: 结果位置         | 搜索并直接播放第 N 个歌曲结果。            |
 
 ## 🚀 安装与使用
 
 ### 前置条件
 
-- **操作系统**：macOS 或 Windows
+- **操作系统**：macOS 或 Windows（新版官方客户端播放控制目前仅支持 Windows）
 - **Python 版本**：3.10 或更高
   - macOS：通常自带，运行 `python3 --version` 检查
   - Windows：从 [python.org](https://www.python.org/downloads/) 下载安装
-- **安装网易云音乐桌面客户端**（
+- **安装网易云音乐桌面客户端**
 - **LLM 客户端**（如 Claude Desktop、OpenCode 等）
+
+> **已知限制（Codex 隔离环境）**：当网易云音乐客户端完全退出时，MCP 目前不能可靠地自动启动客户端并建立控制通道。请先用普通 Windows 用户方式手动启动官方客户端，待主窗口出现后再调用播放 Tool。客户端已运行时，单曲、每日推荐、搜索后播放和歌单播放均可正常控制。`启动网易云音乐-MCP.cmd` 可用于手动启动和排查启动失败；不要从 Codex 内置终端运行该脚本。主界面、托盘和音频均由官方客户端提供。
 
 ### 安装步骤
 
@@ -73,7 +80,7 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ```bash
 # 克隆项目
-git clone https://github.com/Code-MonkeyZhang/cloud-music-mcp.git
+git clone https://github.com/Jas0nSt0ne/cloud-music-mcp.git
 cd cloud-music-mcp
 
 # 创建虚拟环境
@@ -84,7 +91,7 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 
 # 安装项目（可编辑模式）
-uv pip install -e .
+uv sync
 ```
 
 ### 配置 LLM 客户端
@@ -102,7 +109,7 @@ uv pip install -e .
 {
   "mcpServers": {
     "cloud-music": {
-      "command": ["/绝对路径到/cloud-music-mcp/.venv/bin/cloud-music-mcp"],
+      "command": "/绝对路径到/cloud-music-mcp/.venv/bin/cloud-music-mcp",
       "enabled": true
     }
   }
@@ -132,7 +139,7 @@ uv pip install -e .
 **日志说明：**
 
 - **默认状态**：日志功能默认关闭
-- **开启后**：日志会以 `session_YYYYMMDD_HHMMSS.log` 的格式保存在项目根目录的 `logs/` 文件夹中
+- **开启后**：日志写入用户数据目录下的 `cloud-music-mcp/logs/cloud-music-mcp.log`，单文件 2 MB，保留 3 个轮转文件
 
 ### 使用方法
 
@@ -145,7 +152,24 @@ uv pip install -e .
 
 3. **开始使用**
    - 播放音乐："给我放首歌"
+   - 播放推荐："播放每日推荐第 17 首"
+   - 搜索并播放："播放王力宏的歌"
    - 获取推荐："看看今日推荐有什么"
    - 搜索歌曲："搜一下周杰伦的歌"
    - 创建歌单："帮我建个周杰伦热门歌曲的歌单"
-   - 播放歌单："播放我的收藏歌单"
+
+### Windows 客户端状态
+
+可在普通 Windows Terminal 中检查启动器状态：
+
+```powershell
+cloud-music-mcp-client --status
+cloud-music-mcp-client --status --json
+```
+
+常用环境变量：
+
+- `CLOUD_MUSIC_CLIENT_PATH`：覆盖 `cloudmusic.exe` 路径。
+- `CLOUD_MUSIC_DEBUG_PORT`：覆盖本地控制端口，默认 `9222`。
+- `CLOUD_MUSIC_MCP_DATA_DIR`：覆盖 Cookie 与日志目录。
+- `MCP_LOG_ENABLE=true`：开启轮转日志。
