@@ -276,7 +276,7 @@ wheels = [
 
 [[package]]
 name = "cloud-music-mcp"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
@@ -285,6 +285,7 @@ dependencies = [
     { name = "pyncm" },
     { name = "qrcode" },
     { name = "requests" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -295,6 +296,7 @@ requires-dist = [
     { name = "pyncm", git = "https://github.com/Code-MonkeyZhang/pyncm.git?rev=26fda90ba874b652885458b89b92045ff88a8eef" },
     { name = "qrcode", specifier = ">=7.4.0" },
     { name = "requests", specifier = ">=2.31.0" },
+    { name = "websockets", specifier = ">=14.0" },
 ]
 
 [[package]]
