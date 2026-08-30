@@ -15,6 +15,7 @@ from cloud_music_mcp.client_control import (
     _is_useful_visible_window,
     _navigate_to_playlist_script,
     _playlist_playall_script,
+    _select_debug_target,
     _show_client_script,
     _state_script,
 )
@@ -44,6 +45,38 @@ class ClientConfigTests(unittest.TestCase):
         with patch.dict(os.environ, {"CLOUD_MUSIC_DEBUG_PORT": "70000"}, clear=False):
             with self.assertRaises(ClientControlError):
                 ClientConfig.from_env()
+
+
+class DebugTargetSelectionTests(unittest.TestCase):
+    def target(self, url, target_id):
+        return {
+            "id": target_id,
+            "url": url,
+            "webSocketDebuggerUrl": f"ws://unused/{target_id}",
+        }
+
+    def test_prefers_main_app_when_subapp_is_listed_first(self):
+        subapp = self.target(
+            "orpheus://orpheus/pub/subApp.html?route=musicDesktop", "subapp"
+        )
+        main = self.target("orpheus://orpheus/pub/app.html", "main")
+
+        self.assertIs(_select_debug_target([subapp, main]), main)
+
+    def test_main_app_selection_does_not_depend_on_target_order(self):
+        main = self.target("orpheus://orpheus/pub/app.html?startup=1", "main")
+        subapp = self.target(
+            "orpheus://orpheus/pub/subApp.html?route=musicDesktop", "subapp"
+        )
+
+        self.assertIs(_select_debug_target([main, subapp]), main)
+
+    def test_ignores_subapp_when_main_app_is_not_ready(self):
+        subapp = self.target(
+            "orpheus://orpheus/pub/subApp.html?route=musicDesktop", "subapp"
+        )
+
+        self.assertIsNone(_select_debug_target([subapp]))
 
 
 class WindowVerificationTests(unittest.TestCase):
