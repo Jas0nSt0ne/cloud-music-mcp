@@ -29,6 +29,7 @@ from .windows_desktop import (
 
 
 MAIN_WINDOW_CLASSES = frozenset({"OrpheusBrowserHost"})
+MAIN_DEBUG_URL = "orpheus://orpheus/pub/app.html"
 T = TypeVar("T")
 
 
@@ -300,13 +301,7 @@ class NetEaseClientController:
                 targets = json.load(response)
         except (OSError, ValueError, urllib.error.URLError):
             return None
-        candidates = [
-            target
-            for target in targets
-            if target.get("webSocketDebuggerUrl")
-            and target.get("url", "").startswith("orpheus://")
-        ]
-        return candidates[0] if candidates else None
+        return _select_debug_target(targets)
 
     def _ensure_debug_target(self) -> dict[str, Any]:
         target = self._get_debug_target()
@@ -606,6 +601,20 @@ def launch_visible_client() -> dict[str, Any]:
 
 def get_client_status() -> dict[str, Any]:
     return NetEaseClientController().status()
+
+
+def _select_debug_target(
+    targets: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    for target in targets:
+        url = target.get("url", "")
+        if not target.get("webSocketDebuggerUrl"):
+            continue
+        if url == MAIN_DEBUG_URL or url.startswith(
+            (f"{MAIN_DEBUG_URL}?", f"{MAIN_DEBUG_URL}#")
+        ):
+            return target
+    return None
 
 
 def _run_coroutine_sync(

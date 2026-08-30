@@ -23,6 +23,7 @@ from cloud_music_mcp.api import (
     get_my_subscriptions,
 )
 from cloud_music_mcp.client_control import get_client_status
+from cloud_music_mcp.bgm_playlist import import_bgm_playlist, preview_bgm_playlist
 from cloud_music_mcp.services import (
     play_daily_recommendation,
     play_song_by_id,
@@ -131,6 +132,26 @@ def cloud_music_add_to_playlist(playlist_id: int, track_ids: list[int]):
         return f"成功添加 {result['added_count']} 首歌曲到歌单 {playlist_id}"
     else:
         return f"添加失败: {result.get('error')}"
+
+
+@mcp.tool(description=load_prompt("cloud_music_preview_bgm_playlist"))
+def cloud_music_preview_bgm_playlist(
+    tracks: list[dict[str, str]], playlist_label: str = ""
+):
+    logger.info(
+        "Calling cloud_music_preview_bgm_playlist with %s tracks", len(tracks)
+    )
+    return preview_bgm_playlist(tracks, playlist_label)
+
+
+@mcp.tool(description=load_prompt("cloud_music_import_bgm_playlist"))
+def cloud_music_import_bgm_playlist(
+    tracks: list[dict[str, str]],
+    playlist_label: str = "",
+    privacy: bool = False,
+):
+    logger.info("Calling cloud_music_import_bgm_playlist with %s tracks", len(tracks))
+    return import_bgm_playlist(tracks, playlist_label, privacy)
 
 
 @mcp.tool(description=load_prompt("cloud_music_album_info"))
