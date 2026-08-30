@@ -1,6 +1,6 @@
 [project]
 name = "netease-cloud-music-mcp"
-version = "0.2.1"
+version = "1.0.0"
 description = "NetEase Cloud Music MCP Server"
 readme = "README.md"
 requires-python = ">=3.10"
