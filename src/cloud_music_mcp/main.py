@@ -45,7 +45,7 @@ logging.getLogger("pyncm.api").setLevel(logging.WARNING)
 logging.getLogger("pyncm.helper").setLevel(logging.WARNING)
 
 # 初始化 MCP Server
-mcp = FastMCP("Cloud-Music-MCP")
+mcp = FastMCP("NetEase-Cloud-Music-MCP")
 
 
 @mcp.tool(description=load_prompt("cloud_music_status"))

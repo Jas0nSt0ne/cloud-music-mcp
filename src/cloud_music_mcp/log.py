@@ -22,7 +22,7 @@ def setup_logging(name: str = "cloud_music_mcp") -> logging.Logger:
     log_dir = _data_dir() / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     handler = RotatingFileHandler(
-        log_dir / "cloud-music-mcp.log",
+        log_dir / "netease-cloud-music-mcp.log",
         maxBytes=2 * 1024 * 1024,
         backupCount=3,
         encoding="utf-8",
@@ -39,9 +39,11 @@ def setup_logging(name: str = "cloud_music_mcp") -> logging.Logger:
 
 
 def _data_dir() -> Path:
-    override = os.getenv("CLOUD_MUSIC_MCP_DATA_DIR")
+    override = os.getenv("NETEASE_CLOUD_MUSIC_MCP_DATA_DIR") or os.getenv(
+        "CLOUD_MUSIC_MCP_DATA_DIR"
+    )
     if override:
         return Path(override).expanduser()
     if sys.platform == "win32" and os.getenv("APPDATA"):
-        return Path(os.environ["APPDATA"]) / "cloud-music-mcp"
-    return Path.home() / ".cloud-music-mcp"
+        return Path(os.environ["APPDATA"]) / "netease-cloud-music-mcp"
+    return Path.home() / ".netease-cloud-music-mcp"

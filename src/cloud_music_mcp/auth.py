@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -17,30 +16,22 @@ from pyncm import GetCurrentSession, apis
 from .windows_desktop import current_desktop_name, input_desktop_name
 
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-LEGACY_COOKIE_FILE = PACKAGE_DIR / "storage" / "cookies.json"
+DATA_DIR_ENV = "NETEASE_CLOUD_MUSIC_MCP_DATA_DIR"
+LEGACY_DATA_DIR_ENV = "CLOUD_MUSIC_MCP_DATA_DIR"
 
 
 def get_storage_dir() -> Path:
-    override = os.getenv("CLOUD_MUSIC_MCP_DATA_DIR")
+    override = os.getenv(DATA_DIR_ENV) or os.getenv(LEGACY_DATA_DIR_ENV)
     if override:
         return Path(override).expanduser().resolve()
     if sys.platform == "win32" and os.getenv("APPDATA"):
-        return Path(os.environ["APPDATA"]) / "cloud-music-mcp"
-    return Path.home() / ".cloud-music-mcp"
+        return Path(os.environ["APPDATA"]) / "netease-cloud-music-mcp"
+    return Path.home() / ".netease-cloud-music-mcp"
 
 
 def ensure_storage_dir() -> Path:
     directory = get_storage_dir()
-    try:
-        directory.mkdir(parents=True, exist_ok=True)
-    except PermissionError:
-        # Sandboxed MCP hosts may only grant writes beside the checked-out project.
-        directory = LEGACY_COOKIE_FILE.parent
-        directory.mkdir(parents=True, exist_ok=True)
-    cookie_file = directory / "cookies.json"
-    if not cookie_file.exists() and LEGACY_COOKIE_FILE.is_file():
-        shutil.copy2(LEGACY_COOKIE_FILE, cookie_file)
+    directory.mkdir(parents=True, exist_ok=True)
     return directory
 
 
@@ -57,7 +48,9 @@ def load_session(*, verify: bool = True) -> tuple[bool, str | None]:
             cookies = json.load(stream)
         if not isinstance(cookies, dict):
             return False, None
-        GetCurrentSession().cookies.update(cookies)
+        session = GetCurrentSession()
+        session.cookies.clear()
+        session.cookies.update(cookies)
         if not verify:
             return True, None
         user_info = apis.login.GetCurrentLoginStatus()

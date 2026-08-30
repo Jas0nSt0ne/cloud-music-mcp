@@ -275,8 +275,8 @@ wheels = [
 ]
 
 [[package]]
-name = "cloud-music-mcp"
-version = "0.2.0"
+name = "netease-cloud-music-mcp"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },

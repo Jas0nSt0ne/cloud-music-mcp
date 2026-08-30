@@ -1,4 +1,4 @@
-"""网易云音乐 MCP Server"""
+"""NetEase Cloud Music MCP Server."""
 
 import argparse
 import logging
@@ -15,7 +15,7 @@ def main():
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
-        description="网易云音乐 MCP Server",
+        description="NetEase Cloud Music MCP Server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
