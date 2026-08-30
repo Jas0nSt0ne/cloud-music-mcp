@@ -10,6 +10,12 @@ ENV/
 
 # Sensitive Data (Cookies & Sessions)
 src/cloud_music_mcp/storage/
+cookies.json
+session.ncm
+login_qrcode.png
+.env
+.env.*
+!.env.example
 
 # Logs
 *.log

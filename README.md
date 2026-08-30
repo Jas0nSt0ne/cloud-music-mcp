@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" width="128" alt="Cloud Music MCP Logo">
+  <img src="logo.png" width="128" alt="NetEase Cloud Music MCP Logo">
 </p>
 
-# 网易云音乐 MCP 服务器
+# NetEase Cloud Music MCP（网易云音乐 MCP 服务器）
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Pull Requests Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen)
 
@@ -14,6 +14,7 @@
 
 ## 📢 Update
 
+- **2026-08-30** 🔒 v0.2.1 安全修复 — 撤销历史泄露的登录态，从本地及 GitHub 分支/标签历史中清除 Cookie、Session 和二维码文件，并增加通用敏感文件忽略规则；项目对外名称统一为 `netease-cloud-music-mcp`。
 - **2026-08-18** 🖥️ v0.2.0 重构 Windows 播放控制 — 识别 Codex 隔离桌面，新增真实窗口与播放状态双重校验、每日推荐按位置直接播放、搜索并播放以及结构化错误码。已知限制：在 Codex 隔离环境中，客户端完全退出后的自动启动暂不可用。
 - **2026-06-29** 🎉 新增歌单管理 — AI 现在可以帮你创建歌单并批量添加歌曲，一句话完成「搜歌 → 建单 → 加歌」全流程。
 - **2026-06-29** 🔎 新增资料查询 — 支持查询歌单详情、专辑信息、歌手信息以及你的收藏列表。
@@ -80,8 +81,8 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ```bash
 # 克隆项目
-git clone https://github.com/Jas0nSt0ne/cloud-music-mcp.git
-cd cloud-music-mcp
+git clone https://github.com/Jas0nSt0ne/netease-cloud-music-mcp.git
+cd netease-cloud-music-mcp
 
 # 创建虚拟环境
 uv venv
@@ -108,15 +109,15 @@ uv sync
 ```json
 {
   "mcpServers": {
-    "cloud-music": {
-      "command": "/绝对路径到/cloud-music-mcp/.venv/bin/cloud-music-mcp",
+    "netease-cloud-music": {
+      "command": "/绝对路径到/netease-cloud-music-mcp/.venv/bin/netease-cloud-music-mcp",
       "enabled": true
     }
   }
 }
 ```
 
-> **重要**：将 `/绝对路径/到/cloud-music-mcp` 替换为项目的实际绝对路径。Windows 用户请使用双反斜杠 `\\` 或正斜杠 `/`。
+> **重要**：将 `/绝对路径/到/netease-cloud-music-mcp` 替换为项目的实际绝对路径。Windows 用户请使用双反斜杠 `\\` 或正斜杠 `/`。旧命令 `cloud-music-mcp` 暂时保留为兼容别名。
 
 #### 开启日志（可选）
 
@@ -125,8 +126,8 @@ uv sync
 ```json
 {
   "mcpServers": {
-    "cloud-music": {
-      "command": ["/绝对路径/到/cloud-music-mcp/.venv/bin/cloud-music-mcp"],
+    "netease-cloud-music": {
+      "command": "/绝对路径/到/netease-cloud-music-mcp/.venv/bin/netease-cloud-music-mcp",
       "enabled": true,
       "env": {
         "MCP_LOG_ENABLE": "true"
@@ -139,7 +140,7 @@ uv sync
 **日志说明：**
 
 - **默认状态**：日志功能默认关闭
-- **开启后**：日志写入用户数据目录下的 `cloud-music-mcp/logs/cloud-music-mcp.log`，单文件 2 MB，保留 3 个轮转文件
+- **开启后**：日志写入用户数据目录下的 `netease-cloud-music-mcp/logs/netease-cloud-music-mcp.log`，单文件 2 MB，保留 3 个轮转文件
 
 ### 使用方法
 
@@ -163,13 +164,18 @@ uv sync
 可在普通 Windows Terminal 中检查启动器状态：
 
 ```powershell
-cloud-music-mcp-client --status
-cloud-music-mcp-client --status --json
+netease-cloud-music-mcp-client --status
+netease-cloud-music-mcp-client --status --json
 ```
 
 常用环境变量：
 
 - `CLOUD_MUSIC_CLIENT_PATH`：覆盖 `cloudmusic.exe` 路径。
 - `CLOUD_MUSIC_DEBUG_PORT`：覆盖本地控制端口，默认 `9222`。
-- `CLOUD_MUSIC_MCP_DATA_DIR`：覆盖 Cookie 与日志目录。
+- `NETEASE_CLOUD_MUSIC_MCP_DATA_DIR`：覆盖 Cookie 与日志目录。
+- `CLOUD_MUSIC_MCP_DATA_DIR`：旧环境变量兼容别名。
 - `MCP_LOG_ENABLE=true`：开启轮转日志。
+
+## 🙏 来源与致谢
+
+本项目最初基于 [Code-MonkeyZhang/cloud-music-mcp](https://github.com/Code-MonkeyZhang/cloud-music-mcp) 开发，并在其基础上继续完善网易云账号能力、歌单管理和 Windows 官方客户端播放控制。感谢原作者 Jonathan Zhang 的开源工作；原始提交作者信息与 MIT License 均予以保留。

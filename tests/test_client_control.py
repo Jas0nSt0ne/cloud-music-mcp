@@ -145,7 +145,7 @@ class VisibleLauncherRequestTests(unittest.TestCase):
 
     def test_background_helper_suppresses_success_output(self):
         with (
-            patch("sys.argv", ["cloud-music-mcp-client", "--background"]),
+            patch("sys.argv", ["netease-cloud-music-mcp-client", "--background"]),
             patch.object(
                 visible_client,
                 "launch_visible_client",
